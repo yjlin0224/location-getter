@@ -13,10 +13,23 @@
   </head>
   <body class="p-4">
     <div class="container">
-      <h1 class="mb-4">取得使用者位置</h1>
-      <button id="getLocationBtn" class="btn btn-primary mb-3">取得位置</button>
-      <div id="locationDisplay" class="alert alert-info d-none"></div>
-      <div id="errorDisplay" class="alert alert-danger d-none"></div>
+      <h1 class="mb-4 text-center">取得當前位置</h1>
+      <div id="progress-bar" class="progress">
+        <div
+          class="progress-bar progress-bar-striped progress-bar-animated"
+          role="progressbar"
+          aria-valuenow="100"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          style="width: 100%"
+        ></div>
+      </div>
+      <div id="location-text" class="alert alert-info d-none"></div>
+      <div id="error-text" class="alert alert-danger d-none"></div>
+      <div class="text-center mt-2">
+        <button id="callback-btn" class="btn btn-primary d-none">複製座標並返回上一頁</button>
+        <button id="retry-btn" class="btn btn-outline-primary d-none">重新取得</button>
+      </div>
     </div>
 
     <script
@@ -25,45 +38,111 @@
       crossorigin="anonymous"
     ></script>
     <script>
-      const getLocationBtn = document.getElementById('getLocationBtn')
-      const locationDisplay = document.getElementById('locationDisplay')
-      const errorDisplay = document.getElementById('errorDisplay')
+      const progressBarEl = document.getElementById('progress-bar')
+      const locationTextEl = document.getElementById('location-text')
+      const errorTextEl = document.getElementById('error-text')
+      const callbackBtnEl = document.getElementById('callback-btn')
+      const retryBtnEl = document.getElementById('retry-btn')
 
-      getLocationBtn.addEventListener('click', () => {
+      /** @type {GeolocationPosition | null} */
+      let position = null
+
+      /**
+        @param {number} timeout
+        @return {Promise<GeolocationPosition>}
+      */
+      async function getPosition(timeout) {
+        return new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout,
+          })
+        })
+      }
+
+      /**
+        @param {number} coord
+        @param {'latitude' | 'longitude'} type
+        @return {string}
+      */
+      function formatCoord(coord, type) {
+        const absCoord = Math.abs(coord)
+        const degrees = Math.floor(absCoord)
+        const minutes = Math.floor((absCoord - degrees) * 60)
+        const seconds = ((absCoord - degrees - minutes / 60) * 3600).toFixed(2)
+        const direction = type === 'latitude' ? (coord >= 0 ? 'N' : 'S') : coord >= 0 ? 'E' : 'W'
+        return `${degrees}° ${minutes}' ${seconds}" ${direction}`
+      }
+
+      /**
+        @param {GeolocationCoordinates} coords
+        @return {string}
+      */
+      function formatCoords(coords) {
+        const lat = formatCoord(coords.latitude, 'latitude')
+        const lon = formatCoord(coords.longitude, 'longitude')
+        return `${lat}, ${lon}`
+      }
+
+      function tryToGetPosition() {
+        progressBarEl.classList.remove('d-none')
+        locationTextEl.classList.add('d-none')
+        errorTextEl.classList.add('d-none')
+        callbackBtnEl.classList.add('d-none')
+        retryBtnEl.classList.add('d-none')
+        position = null
+
         if (!navigator.geolocation) {
-          errorDisplay.classList.remove('d-none')
-          errorDisplay.textContent = '你的瀏覽器不支援定位功能。'
-          return
-        }
+          progressBarEl.classList.add('d-none')
+          locationTextEl.classList.add('d-none')
+          errorTextEl.classList.remove('d-none')
+          callbackBtnEl.classList.add('d-none')
+          retryBtnEl.classList.remove('d-none')
+          errorTextEl.textContent = '你的瀏覽器不支援定位功能。'
+        } else {
+          getPosition(5000).then(
+            (p) => {
+              position = p
+              const { latitude: lat, longitude: lon } = position.coords
+              progressBarEl.classList.add('d-none')
+              errorTextEl.classList.add('d-none')
+              locationTextEl.classList.remove('d-none')
+              callbackBtnEl.classList.remove('d-none')
+              retryBtnEl.classList.remove('d-none')
+              locationTextEl.textContent = `你的位置是：${formatCoords(position.coords)}`
+            },
+            /**
+              @param {GeolocationPositionError} e
+            */
+            (e) => {
+              progressBarEl.classList.add('d-none')
+              locationTextEl.classList.add('d-none')
+              errorTextEl.classList.remove('d-none')
+              callbackBtnEl.classList.add('d-none')
+              retryBtnEl.classList.remove('d-none')
 
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords
-            locationDisplay.classList.remove('d-none')
-            locationDisplay.textContent = `你的位置是：緯度 ${latitude.toFixed(
-              6,
-            )}，經度 ${longitude.toFixed(6)}`
-            errorDisplay.classList.add('d-none')
-          },
-          (error) => {
-            errorDisplay.classList.remove('d-none')
-            locationDisplay.classList.add('d-none')
-            switch (error.code) {
-              case error.PERMISSION_DENIED:
-                errorDisplay.textContent = '使用者拒絕提供位置資訊。'
-                break
-              case error.POSITION_UNAVAILABLE:
-                errorDisplay.textContent = '無法取得位置資訊。'
-                break
-              case error.TIMEOUT:
-                errorDisplay.textContent = '取得位置逾時。'
-                break
-              default:
-                errorDisplay.textContent = '發生未知錯誤。'
-            }
-          },
-        )
+              switch (e.code) {
+                case e.PERMISSION_DENIED:
+                  errorTextEl.textContent = '使用者拒絕提供位置資訊。'
+                  break
+                case e.POSITION_UNAVAILABLE:
+                  errorTextEl.textContent = '無法取得位置資訊。'
+                  break
+                case e.TIMEOUT:
+                  errorTextEl.textContent = '取得位置逾時。'
+                  break
+                default:
+                  errorTextEl.textContent = '發生未知錯誤。'
+              }
+            },
+          )
+        }
+      }
+
+      retryBtnEl.addEventListener('click', () => {
+        tryToGetPosition()
       })
+
+      tryToGetPosition()
     </script>
   </body>
 </html>
