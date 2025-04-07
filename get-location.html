@@ -102,7 +102,6 @@
           getPosition(5000).then(
             (p) => {
               position = p
-              const { latitude: lat, longitude: lon } = position.coords
               progressBarEl.classList.add('d-none')
               errorTextEl.classList.add('d-none')
               locationTextEl.classList.remove('d-none')
@@ -140,6 +139,21 @@
 
       retryBtnEl.addEventListener('click', () => {
         tryToGetPosition()
+      })
+
+      callbackBtnEl.addEventListener('click', () => {
+        if (!position) return
+        const { latitude, longitude } = position.coords
+        const coords = `${latitude.toFixed(8)}, ${longitude.toFixed(8)}`
+        navigator.clipboard
+          .writeText(coords)
+          .then(() => {
+            alert('座標已複製到剪貼簿！')
+            window.history.back()
+          })
+          .catch((e) => {
+            alert('複製座標失敗。訊息：' + e)
+          })
       })
 
       tryToGetPosition()
