@@ -27,7 +27,7 @@
       <div id="location-text" class="alert alert-info d-none"></div>
       <div id="error-text" class="alert alert-danger d-none"></div>
       <div class="text-center mt-2">
-        <button id="callback-btn" class="btn btn-primary d-none">複製座標並返回上一頁</button>
+        <button id="callback-btn" class="btn btn-primary d-none">複製座標並回到表單</button>
         <button id="retry-btn" class="btn btn-outline-primary d-none">重新取得</button>
       </div>
     </div>
@@ -38,6 +38,10 @@
       crossorigin="anonymous"
     ></script>
     <script>
+      const googleFormId = '1FAIpQLSfdiiGGjWE_n7CZoAszw5Y1BzroJMbgr1bl9cBPYTNInLKjIw'
+      const coordsFieldId = 'entry.2053104920'
+      const googleFormUrl = `https://docs.google.com/forms/d/e/${googleFormId}/formResponse?entry.${coordsFieldId}`
+
       const progressBarEl = document.getElementById('progress-bar')
       const locationTextEl = document.getElementById('location-text')
       const errorTextEl = document.getElementById('error-text')
@@ -148,8 +152,9 @@
         navigator.clipboard
           .writeText(coords)
           .then(() => {
-            alert('座標已複製到剪貼簿！請手動回到上一頁貼上。')
+            // alert('座標已複製到剪貼簿！請手動回到上一頁貼上。')
             // ;(window.history.length > 0 ? window.history.back : window.close)()
+            window.location.href = googleFormUrl + '=' + encodeURIComponent(coords)
           })
           .catch((e) => {
             alert('複製座標失敗。訊息：' + e)
