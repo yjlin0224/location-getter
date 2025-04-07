@@ -98,8 +98,7 @@
         const { latitude, longitude } = coords
         return `
 <iframe
-  class="rounded"
-  style="border: 0"
+  class="border border-info rounded"
   src="https://www.google.com/maps?q=${latitude},${longitude}&z=16&hl=zh-TW&output=embed"
   width="100%"
   height="400"
@@ -155,16 +154,16 @@
 
               switch (e.code) {
                 case e.PERMISSION_DENIED:
-                  errorTextEl.textContent = '使用者拒絕提供位置資訊。'
+                  errorTextEl.textContent = '瀏覽器沒有位置權限或被使用者拒絕。'
                   break
                 case e.POSITION_UNAVAILABLE:
-                  errorTextEl.textContent = '無法取得位置資訊。'
+                  errorTextEl.textContent = '位置取得失敗，可能是沒有衛星訊號。'
                   break
                 case e.TIMEOUT:
-                  errorTextEl.textContent = '取得位置逾時。'
+                  errorTextEl.textContent = '位置取得超時，可能是衛星訊號不佳。'
                   break
                 default:
-                  errorTextEl.textContent = '發生未知錯誤。'
+                  errorTextEl.textContent = '發生未知的錯誤，請再嘗試重新取得。'
               }
             },
           )
@@ -188,7 +187,7 @@
             window.location.href = url
           })
           .catch((e) => {
-            alert('複製座標失敗。訊息：' + e)
+            window.alert('複製座標失敗。錯誤訊息：' + e)
           })
       })
 
