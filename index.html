@@ -148,8 +148,8 @@
         navigator.clipboard
           .writeText(coords)
           .then(() => {
-            alert('座標已複製到剪貼簿！')
-            ;(window.history.length > 0 ? window.history.back : window.close)()
+            alert('座標已複製到剪貼簿！請手動回到上一頁貼上。')
+            // ;(window.history.length > 0 ? window.history.back : window.close)()
           })
           .catch((e) => {
             alert('複製座標失敗。訊息：' + e)
