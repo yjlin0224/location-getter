@@ -25,10 +25,11 @@
         ></div>
       </div>
       <div id="location-text" class="alert alert-info d-none"></div>
+      <div id="google-map" class="d-none mt-2"></div>
       <div id="error-text" class="alert alert-danger d-none"></div>
       <div class="text-center mt-2">
-        <button id="callback-btn" class="btn btn-primary d-none">複製座標並回到表單</button>
-        <button id="retry-btn" class="btn btn-outline-primary d-none">重新取得</button>
+        <button id="callback-btn" class="btn btn-primary mb-2 d-none">複製座標並回到表單</button>
+        <button id="retry-btn" class="btn btn-outline-primary mb-2 d-none">重新取得</button>
       </div>
     </div>
 
@@ -41,9 +42,10 @@
       const googleFormId = '1FAIpQLSfdiiGGjWE_n7CZoAszw5Y1BzroJMbgr1bl9cBPYTNInLKjIw'
       const googleFormUrl = `https://docs.google.com/forms/d/e/${googleFormId}/viewform`
       const coordsFieldId = 'entry.2053104920'
-      //https://docs.google.com/forms/d/1YHXoqubSW60KohFeMJXFgdmUhzvz0rQVzxjylR7wQNo/viewform?usp=pp_url&entry.2053104920=1
+
       const progressBarEl = document.getElementById('progress-bar')
       const locationTextEl = document.getElementById('location-text')
+      const googleMapEl = document.getElementById('google-map')
       const errorTextEl = document.getElementById('error-text')
       const callbackBtnEl = document.getElementById('callback-btn')
       const retryBtnEl = document.getElementById('retry-btn')
@@ -87,17 +89,40 @@
         return `${lat}, ${lon}`
       }
 
+      /**
+        @param {GeolocationCoordinates} coords
+        @return {string}
+      */
+      function generateGoogleMapIframeHtml(coords) {
+        const { latitude, longitude } = coords
+        return `
+<iframe
+  class="rounded"
+  style="border: 0"
+  src="https://www.google.com/maps?q=${latitude},${longitude}&z=16&hl=zh-TW&output=embed"
+  width="100%"
+  height="400"
+  allowfullscreen
+  loading="lazy"
+  referrerpolicy="no-referrer-when-downgrade"
+></iframe>
+`
+      }
+
       function tryToGetPosition() {
         progressBarEl.classList.remove('d-none')
         locationTextEl.classList.add('d-none')
+        googleMapEl.classList.add('d-none')
         errorTextEl.classList.add('d-none')
         callbackBtnEl.classList.add('d-none')
         retryBtnEl.classList.add('d-none')
         position = null
+        googleMapEl.innerHTML = ''
 
         if (!navigator.geolocation) {
           progressBarEl.classList.add('d-none')
           locationTextEl.classList.add('d-none')
+          googleMapEl.classList.add('d-none')
           errorTextEl.classList.remove('d-none')
           callbackBtnEl.classList.add('d-none')
           retryBtnEl.classList.remove('d-none')
@@ -107,10 +132,13 @@
             (p) => {
               position = p
               progressBarEl.classList.add('d-none')
-              errorTextEl.classList.add('d-none')
               locationTextEl.classList.remove('d-none')
+              googleMapEl.classList.remove('d-none')
+              errorTextEl.classList.add('d-none')
               callbackBtnEl.classList.remove('d-none')
               retryBtnEl.classList.remove('d-none')
+
+              googleMapEl.innerHTML = generateGoogleMapIframeHtml(position.coords)
               locationTextEl.textContent = `你的位置是：${formatCoords(position.coords)}`
             },
             /**
@@ -119,6 +147,7 @@
             (e) => {
               progressBarEl.classList.add('d-none')
               locationTextEl.classList.add('d-none')
+              googleMapEl.classList.add('d-none')
               errorTextEl.classList.remove('d-none')
               callbackBtnEl.classList.add('d-none')
               retryBtnEl.classList.remove('d-none')
