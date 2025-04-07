@@ -149,7 +149,7 @@
           .writeText(coords)
           .then(() => {
             alert('座標已複製到剪貼簿！')
-            window.history.back()
+            setTimeout(window.history.back, 500)
           })
           .catch((e) => {
             alert('複製座標失敗。訊息：' + e)
